@@ -1,0 +1,16 @@
+# Skin Disease Detection - Backend Requirements
+
+# Core Framework
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# Machine Learning & Image Processing
+tensorflow>=2.13.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# HTTP Requests (for Overpass API)
+requests>=2.31.0
+
+# File Handling
+python-multipart>=0.0.6
