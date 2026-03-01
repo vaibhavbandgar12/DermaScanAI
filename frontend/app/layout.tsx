@@ -35,6 +35,8 @@ export const viewport: Viewport = {
   userScalable: true,
 }
 
+import { AuthProvider } from '@/components/auth-provider'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,7 +45,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${_inter.variable} ${_geistMono.variable} font-sans antialiased`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

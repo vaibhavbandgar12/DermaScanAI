@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { PredictionResult } from "@/components/prediction-result"
 import { NearbyDoctors } from "@/components/nearby-doctors"
+import { useAuth } from "@/components/auth-provider"
 
 // API URL — defaults to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -35,6 +36,7 @@ interface PredictionResponse {
 }
 
 export function SkinUpload() {
+  const { logout } = useAuth()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -95,28 +97,43 @@ export function SkinUpload() {
     setResult(null)
 
     try {
-      // Get user location for doctor search
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            timeout: 10000,
-          })
-      ).catch(() => null)
+      // Get user location for doctor search - NON BLOCKING (3s timeout)
+      const positionPromise = new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 3000,
+          maximumAge: 60000,
+        })
+      })
 
-      const lat = position?.coords.latitude ?? 28.6139 // Delhi fallback
-      const lng = position?.coords.longitude ?? 77.209
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
+
+      const position = await Promise.race([positionPromise, timeoutPromise]).catch(() => null) as GeolocationPosition | null
+
+      const lat = position?.coords?.latitude ?? 28.6139 // Delhi fallback
+      const lng = position?.coords?.longitude ?? 77.209
 
       const formData = new FormData()
       formData.append("file", file)
       formData.append("latitude", String(lat))
       formData.append("longitude", String(lng))
 
+      const token = localStorage.getItem("token")
+      const headers: HeadersInit = {}
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
+
       const response = await fetch(`${API_URL}/predict`, {
         method: "POST",
+        headers,
         body: formData,
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          logout()
+          throw new Error("Your session has expired. Please log in again to save your scans.")
+        }
         const detail = await response.json().catch(() => null)
         throw new Error(
           detail?.detail || `Server error (${response.status})`
@@ -164,11 +181,10 @@ export function SkinUpload() {
                 if (e.key === "Enter" || e.key === " ") inputRef.current?.click()
               }}
               aria-label="Upload skin image"
-              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 md:p-16 ${
-                isDragging
-                  ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                  : "border-border bg-card hover:border-primary/50 hover:bg-secondary/50 hover:shadow-md"
-              }`}
+              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 md:p-16 ${isDragging
+                ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                : "border-border bg-card hover:border-primary/50 hover:bg-secondary/50 hover:shadow-md"
+                }`}
             >
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-primary transition-transform duration-300 group-hover:scale-110">
                 <Upload className="h-7 w-7" />
@@ -281,8 +297,7 @@ export function SkinUpload() {
               <PredictionResult result={result} />
 
               {/* Find nearby doctors button */}
-              {result.condition !== "Uncertain" &&
-                result.nearby_dermatologists &&
+              {result.nearby_dermatologists &&
                 result.nearby_dermatologists.length > 0 && (
                   <button
                     onClick={() => setShowDoctors(!showDoctors)}

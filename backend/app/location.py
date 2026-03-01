@@ -1,11 +1,11 @@
 # app/location.py
 
-import requests
+import httpx
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 
-def find_dermatologists(lat, lng):
+async def find_dermatologists(lat, lng):
 
     # Search within 5km radius for a variety of medical place tags
     query = f'''
@@ -35,8 +35,9 @@ def find_dermatologists(lat, lng):
     '''
 
     try:
-        response = requests.post(OVERPASS_URL, data=query, timeout=10)
-        data = response.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(OVERPASS_URL, data=query, timeout=10.0)
+            data = response.json()
     except Exception:
         return []
 

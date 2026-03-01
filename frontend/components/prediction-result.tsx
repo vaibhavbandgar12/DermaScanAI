@@ -17,19 +17,35 @@ interface PredictionResponse {
   urgent?: boolean
   message?: string
   disclaimer: string
+  heatmap_url?: string
 }
 
 function ConfidenceMeter({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100)
-  let color = "bg-success"
-  if (pct < 40) color = "bg-warning"
-  if (pct < 25) color = "bg-destructive"
+
+  let riskLevel = "Low Confidence: Inconclusive"
+  let color = "bg-muted-foreground"
+  let textColor = "text-muted-foreground"
+
+  if (pct >= 85) {
+    riskLevel = "High Confidence: Strong Model Agreement"
+    color = "bg-success"
+    textColor = "text-success"
+  } else if (pct >= 60) {
+    riskLevel = "Moderate Confidence: Needs Professional Review"
+    color = "bg-warning"
+    textColor = "text-warning"
+  } else {
+    riskLevel = "Low Confidence: Model Uncertain"
+    color = "bg-destructive"
+    textColor = "text-destructive"
+  }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-muted-foreground">Confidence</span>
-        <span className="font-bold text-foreground">{pct}%</span>
+        <span className="font-medium text-muted-foreground">AI Confidence Score</span>
+        <span className={`font-bold ${textColor}`}>{pct}%</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -37,6 +53,9 @@ function ConfidenceMeter({ confidence }: { confidence: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
+        {riskLevel}
+      </p>
     </div>
   )
 }
@@ -81,27 +100,104 @@ const conditionInfo: Record<
 export function PredictionResult({ result }: { result: PredictionResponse }) {
   const info = conditionInfo[result.condition] || conditionInfo.Uncertain
 
-  // Uncertain / Low confidence
+  // 🛑 Startup-Grade AI Refusal Mode (Low Confidence)
   if (result.condition === "Uncertain") {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-md">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-            <HelpCircle className="h-5 w-5 text-muted-foreground" />
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-2xl border border-destructive/30 bg-card shadow-md">
+          {/* Header Banner */}
+          <div className="border-b border-destructive/20 bg-destructive/5 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-destructive">
+                  Analysis Inconclusive
+                </h3>
+                <p className="mt-1 text-sm text-destructive/80">
+                  Our AI system was unable to confidently analyze the uploaded image.
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-foreground">
-              Uncertain Result
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Confidence: {Math.round(result.confidence * 100)}%
-            </p>
+
+          <div className="p-6 space-y-6">
+            {/* Confidence Explanation Box */}
+            <div className="rounded-xl border border-border bg-muted/50 p-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="block text-muted-foreground mb-1">Model Confidence</span>
+                  <span className="font-semibold text-foreground">{Math.round(result.confidence * 100)}%</span>
+                </div>
+                <div>
+                  <span className="block text-muted-foreground mb-1">Required Threshold</span>
+                  <span className="font-semibold text-foreground">60%</span>
+                </div>
+                <div className="col-span-2 border-t border-border/50 pt-3">
+                  <span className="block text-muted-foreground mb-1">System Status</span>
+                  <span className="font-medium text-warning flex items-center gap-1.5">
+                    <ShieldAlert className="h-4 w-4" /> Below Reliable Medical Threshold
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Possible Reasons */}
+              <div>
+                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-3">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  Possible Reasons
+                </h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                    Image may be unclear, blurry, or low contrast
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                    Lighting conditions may affect accuracy
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                    Skin region not clearly visible
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+                    Condition not present in current training data
+                  </li>
+                </ul>
+              </div>
+
+              {/* Next Steps */}
+              <div>
+                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-3">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Recommended Next Steps
+                </h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
+                    Retake the image in natural, even lighting
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
+                    Ensure the affected area is in focus
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
+                    Avoid camera filters or extreme digital zoom
+                  </li>
+                  <li className="flex items-start gap-2 font-medium text-foreground">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    If symptoms persist, consult a dermatologist
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {result.message ||
-            "The model could not confidently identify this condition. Please consult a dermatologist for an accurate diagnosis."}
-        </p>
       </div>
     )
   }
@@ -154,6 +250,28 @@ export function PredictionResult({ result }: { result: PredictionResponse }) {
           <ConfidenceMeter confidence={result.confidence} />
         </div>
       </div>
+
+      {/* AI Explainability (Grad-CAM) */}
+      {result.heatmap_url && (
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-md">
+          <div className="border-b border-border bg-muted/30 p-4">
+            <h4 className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Activity className="h-5 w-5 text-primary" />
+              AI Explainability (Grad-CAM)
+            </h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This heatmap visualizes which areas of the image the AI model focused on to make its prediction. Red areas indicate highest importance.
+            </p>
+          </div>
+          <div className="flex justify-center bg-black/5 p-4">
+            <img
+              src={result.heatmap_url}
+              alt="AI Analysis Heatmap"
+              className="max-h-80 rounded-lg object-contain shadow-sm"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Do's and Don'ts */}
       {result.dos && result.dos.length > 0 && result.dont && result.dont.length > 0 && (

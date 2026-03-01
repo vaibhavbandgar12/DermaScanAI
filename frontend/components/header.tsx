@@ -1,11 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, LogOut, User as UserIcon } from "lucide-react"
+import Link from "next/link"
+import { useAuth } from "@/components/auth-provider"
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -15,16 +18,15 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "glass shadow-lg shadow-primary/5"
-          : "bg-transparent"
-      }`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+        ? "glass shadow-lg shadow-primary/5"
+        : "bg-transparent"
+        }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo + Brand */}
-        <a
-          href="#top"
+        <Link
+          href="/"
           className="group flex items-center gap-3 transition-transform duration-200 hover:scale-105"
         >
           {/* Skin / Shield icon */}
@@ -47,29 +49,62 @@ export function Header() {
             Derma<span className="text-primary">Scan</span>{" "}
             <span className="font-light text-muted-foreground">AI</span>
           </span>
-        </a>
+        </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           {[
-            { label: "Upload", href: "#upload" },
-            { label: "How It Works", href: "#how-it-works" },
-            { label: "About", href: "#about" },
+            { label: "Upload", href: "/#upload" },
+            { label: "How It Works", href: "/#how-it-works" },
+            { label: "About", href: "/#about" },
           ].map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-primary"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
-          <a
-            href="#upload"
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-all duration-200 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
-          >
-            Get Started
-          </a>
+
+          <div className="flex items-center gap-3 border-l border-border pl-6">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground bg-muted px-3 py-1.5 rounded-full">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  <span className="hidden lg:inline-block max-w-[120px] truncate">{user.email}</span>
+                </div>
+                <Link
+                  href="/history"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary px-2"
+                >
+                  History
+                </Link>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Mobile menu toggle */}
@@ -87,26 +122,64 @@ export function Header() {
         <div className="glass border-t border-border px-6 pb-6 md:hidden">
           <div className="flex flex-col gap-4 pt-4">
             {[
-              { label: "Upload", href: "#upload" },
-              { label: "How It Works", href: "#how-it-works" },
-              { label: "About", href: "#about" },
+              { label: "Upload", href: "/#upload" },
+              { label: "How It Works", href: "/#how-it-works" },
+              { label: "About", href: "/#about" },
             ].map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-primary"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
-            <a
-              href="#upload"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-md"
-            >
-              Get Started
-            </a>
+
+            <div className="h-px w-full bg-border my-2" />
+
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  {user.email}
+                </div>
+                <Link
+                  href="/history"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  History
+                </Link>
+                <button
+                  onClick={() => {
+                    logout()
+                    setMobileOpen(false)
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-md transition-all hover:opacity-90"
+                >
+                  Sign up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
