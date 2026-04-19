@@ -71,15 +71,7 @@ DermaScanAI/
 │   └── skin_app.db                # SQLite database file
 └── frontend/                      # Next.js React Frontend
     ├── app/                       # Next.js App Router Structure
-    │   ├── page.tsx               # Main Landing Page
-    │   ├── login/, register/      # Authentication routing
-    │   ├── history/               # Protected user history route
-    │   └── layout.tsx             # Root layout and Providers
     ├── components/                # React Modular Components
-    │   ├── ui/                    # Reusable shadcn/ui Primitives
-    │   ├── skin-upload.tsx        # Drag & Drop image widget
-    │   ├── prediction-result.tsx  # Diagnosis, GradCAM rendering
-    │   └── nearby-doctors.tsx     # Map display and Doctor List rendering
     ├── hooks/                     # Custom React Hooks
     ├── lib/                       # Utility Functions
     └── .env.local                 # Environment Variables linking Frontend to Backend
@@ -87,92 +79,148 @@ DermaScanAI/
 
 ---
 
-## 📡 API Reference
+## 🛠️ Detailed Installation Guide
 
-### 1. Prediction API
-*   **Endpoint URL:** `POST /predict`
-*   **Requirements:** Requires `multipart/form-data` with `file` (Image), `latitude` (float), `longitude` (float).
-*   **Response:** JSON containing diagnosis, confidence metrics, medical Dos & Don'ts, nearby dermatologists, and `heatmap_url`.
-*   **Quality Check:** Fails robustly (HTTP 413 or 400) if the image size exceeds 5MB, or fails blur/contrast checks natively.
+This section provides explicit, step-by-step installation instructions to easily get the frontend and backend running.
 
-### 2. User Authentication
-*   **Endpoint URL:** `POST /token`
-*   **Requirements:** Standard OAuth2 Password Form via FastAPI form-data input schema.
-*   **Response:** Returns a standard JWT Bearer token used for session authorization.
+### Prerequisites
 
-### 3. Patient History Extraction
-*   **Endpoint URL:** `GET /history`
-*   **Requirements:** Requires API Authorization Header (`Bearer <token>`).
-*   **Response:** JSON array mapping the user's historical AI scans, timestamped.
+Ensure you have the following installed on your system:
+| Requirement | Version | Description |
+|-------------|---------|-------------|
+| **Node.js** | 18+ | JavaScript runtime for frontend |
+| **Python** | 3.8+ | Backend runtime |
+| **Git** | Latest | Version control (optional) |
 
 ---
 
-## 🛠️ Getting Started & Installation
-
-### Prerequisites
-- **Node.js** (v18+)
-- **Python** (v3.8+)
-- **Git**
-
-### 1. Setup the Backend API
-
+### Step 1: Clone the Repository
 ```bash
-# Navigate to the backend directory
+git clone https://github.com/vaibhavbandgar12/DermaScanAI.git
+cd DermaScanAI
+```
+
+### Step 2: Backend Setup 
+
+#### 2.1 Navigate to Backend Directory
+```bash
 cd backend
+```
 
-# Create and activate a virtual environment
+#### 2.2 Create Virtual Environment (Recommended)
+
+**Using venv (Windows):**
+```bash
 python -m venv venv
-
-# For Windows:
 venv\Scripts\activate
-# For macOS/Linux:
-# source venv/bin/activate
+```
 
-# Install dependencies strictly defined in requirements.txt
+**Using venv (macOS/Linux):**
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+**Using Conda (Alternative):**
+```bash
+conda create -n skin_detection python=3.10
+conda activate skin_detection
+```
+
+#### 2.3 Install Backend Dependencies
+```bash
 pip install -r requirements.txt
+```
+*(Note: If TensorFlow throws an import error later, you can manually install it via `pip install tensorflow`)*
 
-# Boot up the FastAPI Server
-# CRITICAL: Ensure it binds to port 8001 as configured in the frontend requirements
+#### 2.4 Start the Backend Server
+```bash
 uvicorn app.main:app --reload --port 8001
 ```
 
-*The interactive API documentation is automatically available at: [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs).*
+**Note:** The backend API will now be aggressively running at:
+- **API URL:** `http://127.0.0.1:8001`
+- **Interactive Docs:** `http://127.0.0.1:8001/docs`
 
-### 2. Setup the Next.js Frontend
+---
 
+### Step 3: Frontend Setup
+
+#### 3.1 Open a New Terminal
+**Keep the backend running in the first terminal**, and open an entirely new terminal window. Navigate to the project root.
+
+#### 3.2 Navigate to Frontend Directory
 ```bash
-# Open a new terminal and navigate to the frontend directory
 cd frontend
+```
 
-# Install Node dependencies
+#### 3.3 Install Dependencies
+```bash
 npm install
+```
 
-# Setup Environment Configuration Variables
-# Rename .env.example simply to .env.local assuring standard linking variables are active:
-# NEXT_PUBLIC_API_URL=http://localhost:8001
+#### 3.4 Configure Environment Variables 
+Create a `.env.local` file inside the `frontend` directory and add the following:
+```bash
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8001
+```
 
-# Start the Next.js Development Server Engine
+#### 3.5 Start the Frontend Development Server
+```bash
 npm run dev
 ```
 
-*The application will correctly bootstrap and be visually accessible at: [http://localhost:3000](http://localhost:3000).*
+**The frontend interface will successfully load at:** `http://localhost:3000`
+
+---
+
+## 🏃 Running the Application (Summary)
+
+To avoid confusion, here is how you run both servers locally after your initial setup is complete:
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+venv\Scripts\activate      # Important: Only if using Windows venv
+uvicorn app.main:app --reload --port 8001
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+*(Access the web app at: **`http://localhost:3000`**)*
 
 ---
 
 ## 🔧 Troubleshooting
 
 - **TensorFlow Import Error** (`ImportError: No module named 'tensorflow'`):
-  Make sure you run `pip install -r requirements.txt` effectively, or manually `pip install tensorflow` / `conda install tensorflow`.
+  Make sure you ran `pip install -r requirements.txt` correctly inside your virtual environment, or manually execute `pip install tensorflow`.
 - **Port 8001 Already in Use** (`Error: Port 8001 is already in use`):
-  Find and kill the process using port 8001, or run the backend on a different port and update `.env.local` equivalently.
+  Find and kill the active process tying up port 8001. Alternatively, launch the backend on a different port and logically update `.env.local` in your frontend directory to match the port number.
 - **Node Modules Error** (`Cannot find module './node_modules/...'`):
-  Run `rm -rf node_modules package-lock.json` followed by a fresh `npm install` inside the `frontend/` directory.
-- **CORS Errors**: Ensure `http://localhost:3000` is securely added to the allowed origins list inside `backend/app/main.py`.
-- **Model Not Found**: Ensure `trained_model.keras` exactly exists at `backend/models/trained_model.keras`.
-- **Geolocation API Unresponsive**: Verify active internet connection or allow location access permissions via your web browser.
+  Execute `rm -rf node_modules package-lock.json`, followed logically by a fresh `npm install` inside the `frontend/` folder.
+- **CORS Errors**: Guarantee that `http://localhost:3000` is visibly declared in the allowed origins routing list inside `backend/app/main.py`.
+- **Model Not Found**: Confirm `trained_model.keras` precisely sits at `backend/models/trained_model.keras`.
+
+---
+
+## 📡 API Reference Overview
+
+### 1. Prediction API
+*   **Endpoint URL:** `POST /predict`
+*   **Requirements:** Requires `multipart/form-data` with `file` (Image), `latitude` (float), `longitude` (float).
+*   **Response:** JSON predicting the diagnosis condition, confidence probability percentages, generated Dos & Don'ts mapped dynamically, nearby dermatologists lists, and an optional Grad-CAM `heatmap_url`.
+
+### 2. User Authentication & Scans History
+*   **Endpoint URLs:** `POST /token` | `GET /history`
+*   **Requirements:** Protected via Standard OAuth2 Password Form setup. Calling history routes requires a Bearer JWT Token in the authentication header.
 
 ---
 
 ## ⚠️ Important Medical Disclaimer
 
-**DermaScanAI** operates strictly as an **informational guidance system and rapid screening utility**. It **DOES NOT** provide definitive medical diagnoses, nor does it serve as a substitute for professional medical advice, clinical interventions, or doctor-patient judgments. Users presenting concerning, evolving, or painful dermatological aberrations must consult a board-certified hospital or dermatologist immediately for a formal biopsy. This project is meant for educational and demonstration purposes.
+DermaScanAI operates rigorously as an **informational guidance system and rapid screening utility**. It **DOES NOT** provide definitive medical diagnoses, nor does it serve as a substitute for professional medical advice, clinical interventions, or doctor-patient judgments. Users presenting concerning, evolving, or painful dermatological aberrations must consult a board-certified hospital or dermatologist immediately for a formal biopsy. This project is constructed for educational and architectural demonstration purposes naturally.
