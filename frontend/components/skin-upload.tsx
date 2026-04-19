@@ -17,7 +17,7 @@ import { NearbyDoctors } from "@/components/nearby-doctors"
 import { useAuth } from "@/components/auth-provider"
 
 // API URL — defaults to localhost for development
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_URL = "https://vaibhavban-derma-scan-ai.hf.space"
 
 interface PredictionResponse {
   condition: string

@@ -13,7 +13,7 @@ function ResetPasswordForm({ token }: { token: string | null }) {
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"
+    const API_URL = "https://vaibhavban-derma-scan-ai.hf.space"
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

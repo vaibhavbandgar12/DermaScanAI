@@ -22,7 +22,7 @@ export default function HistoryPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"
+    const API_URL = "https://vaibhavban-derma-scan-ai.hf.space"
 
     useEffect(() => {
         if (!isLoading && !user) {
